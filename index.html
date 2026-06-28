@@ -2,15 +2,13 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <!-- Pengaturan viewport ketat untuk mematikan zoom bawaan Android -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Etika</title>
+  <title>Geometry Dash Android Landscape</title>
   <style>
     *, *::before, *::after { 
       margin: 0; 
       padding: 0; 
       box-sizing: border-box; 
-      /* Mematikan seleksi teks & highlight biru saat di-tap di Android */
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
@@ -25,14 +23,52 @@
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
       color: #fff;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      /* Mematikan gesture scroll/zoom browser smartphone */
       touch-action: none; 
     }
 
-    /* ── Wrapper Adaptif untuk Layar HP ── */
+    /* ── LANDSCAPE WARNING NOTIFICATION ── */
+    #landscapeAlert {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: #070714;
+      z-index: 9999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #landscapeAlert svg {
+      animation: rotateDevice 2s ease-in-out infinite;
+      fill: #00f5ff;
+    }
+
+    @keyframes rotateDevice {
+      0% { transform: rotate(0deg); }
+      50% { transform: rotate(-90deg); }
+      100% { transform: rotate(0deg); }
+    }
+
+    #landscapeAlert p {
+      font-size: 1.1rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #00f5ff;
+    }
+
+    /* Deteksi layar HP tegak (Portrait) */
+    @media screen and (orientation: portrait) {
+      #landscapeAlert {
+        display: flex; /* Munculkan peringatan suruh putar HP */
+      }
+    }
+
+    /* ── GAME WRAPPER & ADAPTIVE CANVAS ── */
     #gameWrapper {
       position: relative;
       width: 100%;
@@ -40,17 +76,17 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 10px;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
 
     #gameContainer {
       position: relative;
-      /* Aspek rasio 2:1 (800x400 asli) tetap terjaga secara dinamis */
-      width: 100%;
+      width: 100vw;
+      height: 50vw; /* Menjaga aspek rasio 2:1 murni di layar landscape lebar */
       max-width: 800px;
-      aspect-ratio: 2 / 1;
+      max-height: 400px;
       background: #000;
-      box-shadow: 0 0 20px rgba(0, 245, 255, 0.15);
+      box-shadow: 0 0 30px rgba(0, 245, 255, 0.2);
       border-radius: 4px;
     }
 
@@ -61,30 +97,25 @@
       background: #070714;
     }
 
-    /* ── UI Overlay Responsif ── */
+    /* ── UI OVERLAY RESPONSIF ── */
     .menu-overlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(5, 5, 20, 0.9);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 15px;
+      gap: 12px;
       z-index: 10;
-      padding: 20px;
+      padding: 15px;
       text-align: center;
     }
 
-    .menu-overlay.hidden {
-      display: none !important;
-    }
+    .menu-overlay.hidden { display: none !important; }
 
     .menu-title {
-      font-size: calc(1.5rem + 1.5vw);
+      font-size: calc(1.4rem + 1.2vw);
       font-weight: 900;
       letter-spacing: 2px;
     }
@@ -93,81 +124,67 @@
     #gameOverMenu .menu-title { color: #ff3c6e; text-shadow: 0 0 15px rgba(255,60,110,0.6); }
     #victoryMenu .menu-title { color: #39ff14; text-shadow: 0 0 15px rgba(57,255,20,0.6); }
 
-    .menu-stats {
-      font-size: calc(0.8rem + 0.5vw);
-      color: #aaa;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 12px;
-    }
+    .menu-stats { font-size: calc(0.75rem + 0.4vw); color: #aaa; }
+    .btn-group { display: flex; gap: 12px; }
 
     .menu-btn {
-      padding: 10px 24px;
-      font-size: calc(0.8rem + 0.4vw);
+      padding: 8px 22px;
+      font-size: calc(0.75rem + 0.3vw);
       font-weight: bold;
       text-transform: uppercase;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
       cursor: pointer;
     }
+    .btn-primary { background: linear-gradient(135deg, #00f5ff, #00a2ff); color: #000; }
+    .btn-secondary { background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); }
 
-    .btn-primary {
-      background: linear-gradient(135deg, #00f5ff, #00a2ff);
-      color: #000;
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.1);
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    /* ── HUD bawah canvas ── */
+    /* HUD Bawah Layar */
     #hud {
       position: absolute;
-      bottom: 12px;
+      bottom: 8px;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       gap: 20px;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: #666;
       letter-spacing: 1px;
       z-index: 5;
-      background: rgba(5, 5, 18, 0.7);
-      padding: 6px 14px;
+      background: rgba(5, 5, 18, 0.85);
+      padding: 5px 14px;
       border-radius: 20px;
       pointer-events: none;
+      border: 1px solid rgba(0, 245, 255, 0.1);
     }
     #hud b { color: #00f5ff; }
 
-    /* Minimalisir kontrol background agar tidak merusak tampilan mobile */
-    #mobileControls {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 12;
-    }
+    #mobileControls { position: absolute; top: 10px; right: 10px; z-index: 12; }
     #uploadBtn {
-      padding: 6px 12px;
+      padding: 5px 10px;
       background: rgba(26, 26, 62, 0.8);
       border: 1px solid #00f5ff44;
-      border-radius: 6px;
+      border-radius: 5px;
       color: #00f5ff;
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       cursor: pointer;
     }
   </style>
 </head>
 <body>
 
+<!-- Peringatan jika layar HP dalam posisi tegak -->
+<div id="landscapeAlert">
+  <svg width="64" height="64" viewBox="0 0 24 24">
+    <path d="M16 1H8C6.34 1 5 2.34 5 4v16c0 1.66 1.34 3 3 3h8c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm-4 20c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm5-4H7V4h10v13z"/>
+  </svg>
+  <p>Mohon Putar HP ke Posisi Landscape (Miring)</p>
+</div>
+
 <div id="gameWrapper">
   <div id="gameContainer">
     <canvas id="gameCanvas" width="800" height="400"></canvas>
 
-    <!-- KONTROL FILE BACKGROUND -->
     <div id="mobileControls">
       <button id="uploadBtn">BG Foto</button>
       <input type="file" id="bgUpload" accept="image/*" style="display:none;" />
@@ -175,13 +192,13 @@
 
     <!-- MAIN MENU -->
     <div id="mainMenu" class="menu-overlay">
-      <div class="menu-title">Gamanye Etika</div>
+      <div class="menu-title">GEOMETRY DASH</div>
       <button class="menu-btn btn-primary" id="startBtn">TAP TO PLAY</button>
     </div>
 
     <!-- GAME OVER -->
     <div id="gameOverMenu" class="menu-overlay hidden">
-      <div class="menu-title">Yaahhh Kalaah</div>
+      <div class="menu-title">GAME OVER</div>
       <div class="menu-stats" id="gameOverStats">Skor: 0 • Terbaik: 0</div>
       <div class="btn-group">
         <button class="menu-btn btn-primary" id="retryBtn">Ulangi</button>
@@ -192,7 +209,7 @@
     <!-- VICTORY -->
     <div id="victoryMenu" class="menu-overlay hidden">
       <div class="menu-title">LEVEL CLEARED! 🎉</div>
-      <div class="menu-stats">Kereeen syang</div>
+      <div class="menu-stats">Kamu sukses menaklukan level!</div>
       <div class="btn-group">
         <button class="menu-btn btn-primary" id="playAgainBtn">Main Lagi</button>
         <button class="menu-btn btn-secondary" id="victoryMenuBtn">Menu</button>
@@ -200,7 +217,6 @@
     </div>
   </div>
 
-  <!-- HUD MOBILE -->
   <div id="hud">
     <div>SKOR <b id="scoreEl">0</b></div>
     <div>TERBAIK <b id="bestEl">0</b></div>
@@ -215,27 +231,24 @@ const W = 800, H = 400;
 const GROUND_Y  = H - 60;
 const P_SIZE    = 34;
 
-// Parameter Fisika Tajam & Responsif Tanpa Melayang
-const GRAVITY   = 1.2;     
-const JUMP_VY   = -17.5;   
-const BASE_SPD  = 7.5;     
+// Parameter Fisika Responsif & Cepat Jatuh
+const GRAVITY   = 1.25;     
+const JUMP_VY   = -17.8;   
+const BASE_SPD  = 7.8;     
 const MAX_SPD   = 14;
 const WIN_SCORE = 20;
 
-// DOM Element
 const scoreEl = document.getElementById('scoreEl');
 const bestEl  = document.getElementById('bestEl');
 const triesEl = document.getElementById('triesEl');
 const bgUpload = document.getElementById('bgUpload');
 const uploadBtn = document.getElementById('uploadBtn');
 
-// Overlays Element
 const mainMenu = document.getElementById('mainMenu');
 const gameOverMenu = document.getElementById('gameOverMenu');
 const victoryMenu = document.getElementById('victoryMenu');
 const gameOverStats = document.getElementById('gameOverStats');
 
-// State Sistem
 let phase = 'menu'; 
 let score = 0, best = 0, tries = 0;
 let scrollSpd = BASE_SPD;
@@ -249,32 +262,53 @@ let bgImage = null;
 let bgOffX = 0, bgImgW = 1, bgScaleH = 1;
 
 // ════════════════════════════════════════════════════════════
-//  ZERO-DELAY INPUT FOR ANDROID & PC
+//  FORCE FULLSCREEN & ORIENTATION LOCK (API HP)
+// ════════════════════════════════════════════════════════════
+function requestLandscapeAndFullscreen() {
+  const docEl = document.documentElement;
+  
+  // Masuk Mode Fullscreen jika didukung browser HP
+  if (docEl.requestFullscreen) {
+    docEl.requestFullscreen().catch(() => {});
+  } else if (docEl.webkitRequestFullscreen) {
+    docEl.webkitRequestFullscreen();
+  }
+
+  // Paksa layar mengunci ke Landscape miring
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch((err) => {
+      console.log("Kunci orientasi otomatis ditolak browser, mengandalkan rotasi manual.");
+    });
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  ZERO-DELAY INPUT MANAGER
 // ════════════════════════════════════════════════════════════
 function triggerJump(e) {
-  // Cegah aksi klik default browser smartphone agar instan melompat
   if (e && e.cancelable) e.preventDefault();
+  
+  // Klik pertama kali otomatis mengaktifkan fullscreen landscape game
+  if (phase === 'menu') {
+    requestLandscapeAndFullscreen();
+  }
   
   if (phase === 'playing' || phase === 'victory') {
     P.jump();
   }
 }
 
-// Pointerdown menangani semua input Touch & Mouse secara universal tanpa lag 300ms
 canvas.addEventListener('pointerdown', triggerJump, { passive: false });
-
 window.addEventListener('keydown', e => {
   if (e.code === 'Space' || e.code === 'ArrowUp') triggerJump(e);
 }, { passive: false });
 
-// Hubungkan Event Tombol HTML
-document.getElementById('startBtn').addEventListener('pointerdown', e => { e.stopPropagation(); startGame(); });
+document.getElementById('startBtn').addEventListener('pointerdown', e => { e.stopPropagation(); requestLandscapeAndFullscreen(); startGame(); });
 document.getElementById('retryBtn').addEventListener('pointerdown', e => { e.stopPropagation(); startGame(); });
 document.getElementById('menuBtn').addEventListener('pointerdown', e => { e.stopPropagation(); backToMenu(); });
 document.getElementById('playAgainBtn').addEventListener('pointerdown', e => { e.stopPropagation(); startGame(); });
 document.getElementById('victoryMenuBtn').addEventListener('pointerdown', e => { e.stopPropagation(); backToMenu(); });
 
-// Fitur Custom Background Image
 uploadBtn.addEventListener('pointerdown', e => { e.stopPropagation(); bgUpload.click(); });
 bgUpload.addEventListener('change', e => {
   const file = e.target.files[0];
@@ -282,10 +316,7 @@ bgUpload.addEventListener('change', e => {
   const url = URL.createObjectURL(file);
   const img = new Image();
   img.onload = () => {
-    bgImage = img;
-    bgImgW = img.naturalWidth;
-    bgScaleH = H / img.naturalHeight;
-    bgOffX = 0;
+    bgImage = img; bgImgW = img.naturalWidth; bgScaleH = H / img.naturalHeight; bgOffX = 0;
   };
   img.src = url;
 });
@@ -296,62 +327,29 @@ bgUpload.addEventListener('change', e => {
 const P = {
   x: 120, y: 0, vy: 0, grounded: true, angle: 0,
 
-  reset() {
-    this.y = GROUND_Y - P_SIZE;
-    this.vy = 0; this.grounded = true; this.angle = 0;
-  },
-
+  reset() { this.y = GROUND_Y - P_SIZE; this.vy = 0; this.grounded = true; this.angle = 0; },
   jump() {
-    if (this.grounded) {
-      this.vy = JUMP_VY;
-      this.grounded = false;
-      spawnJumpDust(this.x + P_SIZE / 2, GROUND_Y);
-    }
+    if (this.grounded) { this.vy = JUMP_VY; this.grounded = false; spawnJumpDust(this.x + P_SIZE / 2, GROUND_Y); }
   },
-
   update() {
-    this.vy += GRAVITY;
-    this.y += this.vy;
-    
-    if (this.y >= GROUND_Y - P_SIZE) {
-      this.y = GROUND_Y - P_SIZE;
-      this.vy = 0; 
-      this.grounded = true;
-    }
-    
-    if (!this.grounded) {
-      this.angle += 7.5; 
-    } else {
-      const snap = Math.round(this.angle / 90) * 90;
-      this.angle += (snap - this.angle) * 0.4; 
-    }
+    this.vy += GRAVITY; this.y += this.vy;
+    if (this.y >= GROUND_Y - P_SIZE) { this.y = GROUND_Y - P_SIZE; this.vy = 0; this.grounded = true; }
+    if (!this.grounded) { this.angle += 7.5; } 
+    else { const snap = Math.round(this.angle / 90) * 90; this.angle += (snap - this.angle) * 0.4; }
   },
-
   draw() {
     const cx = this.x + P_SIZE / 2, cy = this.y + P_SIZE / 2;
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(this.angle * Math.PI / 180);
-    
-    // Desain Box Neon khas Geometry Dash
-    ctx.fillStyle = '#00f5ff';
-    ctx.fillRect(-P_SIZE/2, -P_SIZE/2, P_SIZE, P_SIZE);
-    ctx.fillStyle = '#050518';
-    ctx.save(); ctx.rotate(Math.PI/4); ctx.fillRect(-8,-8,16,16); ctx.restore();
-    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
-    ctx.strokeRect(-P_SIZE/2, -P_SIZE/2, P_SIZE, P_SIZE);
-    
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(this.angle * Math.PI / 180);
+    ctx.fillStyle = '#00f5ff'; ctx.fillRect(-P_SIZE/2, -P_SIZE/2, P_SIZE, P_SIZE);
+    ctx.fillStyle = '#050518'; ctx.save(); ctx.rotate(Math.PI/4); ctx.fillRect(-8,-8,16,16); ctx.restore();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.strokeRect(-P_SIZE/2, -P_SIZE/2, P_SIZE, P_SIZE);
     ctx.restore();
   },
-
-  hitbox() {
-    const pad = 4; // Toleransi pixel tabrakan yang adil di layar sentuh
-    return { x: this.x+pad, y: this.y+pad, w: P_SIZE-pad*2, h: P_SIZE-pad*2 };
-  }
+  hitbox() { const pad = 4; return { x: this.x+pad, y: this.y+pad, w: P_SIZE-pad*2, h: P_SIZE-pad*2 }; }
 };
 
 // ════════════════════════════════════════════════════════════
-//  OBSTACLES & LOGIC
+//  OBSTACLES LOGIC
 // ════════════════════════════════════════════════════════════
 const SW = 30, SH = 36, BW = 36, BH = 36;
 function mkSpike(x) { return { type:'spike', x, y: GROUND_Y-SH, w: SW, h: SH }; }
@@ -374,170 +372,101 @@ function spawnObstacle() {
   obstacles.push(...group);
 }
 
-function rectsOverlap(a, b) {
-  return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
-}
+function rectsOverlap(a, b) { return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y; }
 
 // ════════════════════════════════════════════════════════════
-//  PARTICLES & RENDERING SYSTEM (MENGURANGI PEMAKAIAN MEMORI ANDROID)
+//  PARTICLES & PARTICLES MATH
 // ════════════════════════════════════════════════════════════
 function spawnJumpDust(x, y) {
   for (let i = 0; i < 6; i++) {
-    dustParts.push({
-      x, y, vx: (Math.random()-0.5)*3, vy: -(Math.random()*2),
-      life: 1, size: Math.random()*4+2, color: '#00f5ff'
-    });
+    dustParts.push({ x, y, vx: (Math.random()-0.5)*3, vy: -(Math.random()*2), life: 1, size: Math.random()*4+2, color: '#00f5ff' });
   }
 }
-
 function spawnRunDust() {
   if (Math.random() > 0.3) return;
-  dustParts.push({
-    x: P.x, y: GROUND_Y, vx: -2, vy: -Math.random(),
-    life: 1, size: Math.random()*3+1, color: 'rgba(0, 245, 255, 0.4)'
-  });
+  dustParts.push({ x: P.x, y: GROUND_Y, vx: -2, vy: -Math.random(), life: 1, size: Math.random()*3+1, color: 'rgba(0, 245, 255, 0.4)' });
 }
-
 function spawnDeathBurst(x, y) {
   for (let i = 0; i < 24; i++) {
     const a = Math.random()*Math.PI*2, s = Math.random()*6+2;
-    particles.push({
-      x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s,
-      life: 1, size: Math.random()*6+2, color: i%2 ? '#00f5ff' : '#ff3c6e'
-    });
+    particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, life: 1, size: Math.random()*6+2, color: i%2 ? '#00f5ff' : '#ff3c6e' });
   }
 }
-
 function updateParts(arr, decay) {
   for (const p of arr) { p.x += p.vx; p.y += p.vy; p.life -= decay; }
   return arr.filter(p => p.life > 0);
 }
 
 // ════════════════════════════════════════════════════════════
-//  CORE DRAW ENGINE
+//  ENGINE DRAWING
 // ════════════════════════════════════════════════════════════
 function drawGame() {
-  // Render Background Gambar / Grid Static bawaan
   if (bgImage) {
     const scaledW = bgImgW * bgScaleH;
-    if (phase === 'playing') {
-      bgOffX = (bgOffX + scrollSpd * 0.4) % scaledW;
-    }
-    for (let x = -bgOffX; x < W; x += scaledW) {
-      ctx.drawImage(bgImage, x, 0, scaledW, H);
-    }
-    ctx.fillStyle = 'rgba(5, 5, 20, 0.4)';
-    ctx.fillRect(0, 0, W, GROUND_Y);
+    if (phase === 'playing') bgOffX = (bgOffX + scrollSpd * 0.4) % scaledW;
+    for (let x = -bgOffX; x < W; x += scaledW) ctx.drawImage(bgImage, x, 0, scaledW, H);
+    ctx.fillStyle = 'rgba(5, 5, 20, 0.4)'; ctx.fillRect(0, 0, W, GROUND_Y);
   } else {
-    ctx.fillStyle = '#070714';
-    ctx.fillRect(0, 0, W, GROUND_Y);
-    // Grid horizontal & vertikal minimalis
+    ctx.fillStyle = '#070714'; ctx.fillRect(0, 0, W, GROUND_Y);
     ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1;
     const step = 50, off = gridOff % step;
     for(let x=-off; x<W; x+=step) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,GROUND_Y); ctx.stroke(); }
   }
 
-  // Render Tanah (Ground)
-  ctx.fillStyle = '#0f0f2d';
-  ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+  ctx.fillStyle = '#0f0f2d'; ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
   ctx.strokeStyle = '#00f5ff'; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(W, GROUND_Y); ctx.stroke();
 
-  // Render Partikel Efek
-  for (const p of dustParts) {
-    ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
-    ctx.fillRect(p.x, p.y, p.size, p.size);
-  }
-  for (const p of particles) {
-    ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
-    ctx.beginPath(); ctx.arc(p.x, p.y, p.size/2, 0, Math.PI*2); ctx.fill();
-  }
+  for (const p of dustParts) { ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, p.size, p.size); }
+  for (const p of particles) { ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.beginPath(); ctx.arc(p.x, p.y, p.size/2, 0, Math.PI*2); ctx.fill(); }
   ctx.globalAlpha = 1.0;
 
-  // Render Rintangan (Obstacles)
   for (const o of obstacles) {
     if (o.type === 'spike') {
-      ctx.fillStyle = '#ff3c6e';
-      ctx.beginPath(); ctx.moveTo(o.x, o.y+o.h); ctx.lineTo(o.x+o.w/2, o.y); ctx.lineTo(o.x+o.w, o.y+o.h); ctx.fill();
+      ctx.fillStyle = '#ff3c6e'; ctx.beginPath(); ctx.moveTo(o.x, o.y+o.h); ctx.lineTo(o.x+o.w/2, o.y); ctx.lineTo(o.x+o.w, o.y+o.h); ctx.fill();
     } else {
-      ctx.fillStyle = '#7c3aed';
-      ctx.fillRect(o.x, o.y, o.w, o.h);
+      ctx.fillStyle = '#7c3aed'; ctx.fillRect(o.x, o.y, o.w, o.h);
       ctx.strokeStyle = '#b98fff'; ctx.lineWidth = 1.5; ctx.strokeRect(o.x, o.y, o.w, o.h);
     }
   }
 
-  // Render Garis Finish
-  if (finishFlag) {
-    ctx.fillStyle = '#fff'; ctx.fillRect(finishFlag.x, finishFlag.y, 6, finishFlag.h);
-  }
-
-  // Render Player
+  if (finishFlag) { ctx.fillStyle = '#fff'; ctx.fillRect(finishFlag.x, finishFlag.y, 6, finishFlag.h); }
   if (phase !== 'dead') P.draw();
 }
 
 // ════════════════════════════════════════════════════════════
-//  GAME STATE LOOP MANAGER
+//  GAME LIFECYCLE MANAGERS
 // ════════════════════════════════════════════════════════════
 function startGame() {
-  phase = 'playing';
-  score = 0; tries++;
-  obstacles = []; obTimer = 0;
-  particles = []; dustParts = [];
-  scrollSpd = BASE_SPD;
-  passedGids.clear();
-  finishFlag = null;
-  P.reset();
-  
-  triesEl.textContent = tries;
-  scoreEl.textContent = 0;
-
-  mainMenu.classList.add('hidden');
-  gameOverMenu.classList.add('hidden');
-  victoryMenu.classList.add('hidden');
+  phase = 'playing'; score = 0; tries++; obstacles = []; obTimer = 0; particles = []; dustParts = [];
+  scrollSpd = BASE_SPD; passedGids.clear(); finishFlag = null; P.reset();
+  triesEl.textContent = tries; scoreEl.textContent = 0;
+  mainMenu.classList.add('hidden'); gameOverMenu.classList.add('hidden'); victoryMenu.classList.add('hidden');
 }
 
 function killPlayer() {
-  phase = 'dead';
-  spawnDeathBurst(P.x+P_SIZE/2, P.y+P_SIZE/2);
+  phase = 'dead'; spawnDeathBurst(P.x+P_SIZE/2, P.y+P_SIZE/2);
   gameOverStats.textContent = `Skor: ${score} • Terbaik: ${best}`;
   gameOverMenu.classList.remove('hidden');
 }
 
-function triggerVictory() {
-  phase = 'victory';
-  victoryMenu.classList.remove('hidden');
-}
-
-function backToMenu() {
-  phase = 'menu';
-  mainMenu.classList.remove('hidden');
-  gameOverMenu.classList.add('hidden');
-  victoryMenu.classList.add('hidden');
-}
+function triggerVictory() { phase = 'victory'; victoryMenu.classList.remove('hidden'); }
+function backToMenu() { phase = 'menu'; mainMenu.classList.remove('hidden'); gameOverMenu.classList.add('hidden'); victoryMenu.classList.add('hidden'); }
 
 function loop() {
   if (phase === 'playing' || phase === 'victory') {
     let currentSpd = (phase === 'victory') ? scrollSpd * 0.5 : scrollSpd;
     gridOff += currentSpd;
-
-    if (score >= WIN_SCORE && !finishFlag) {
-      finishFlag = { x: W + 80, y: GROUND_Y - 100, w: 20, h: 100, passed: false };
-    }
-
-    if (phase === 'playing') {
-      if (++obTimer >= obInterval) { obTimer = 0; spawnObstacle(); }
-    }
+    if (score >= WIN_SCORE && !finishFlag) finishFlag = { x: W + 80, y: GROUND_Y - 100, w: 20, h: 100, passed: false };
+    if (phase === 'playing') { if (++obTimer >= obInterval) { obTimer = 0; spawnObstacle(); } }
 
     for (const o of obstacles) {
       o.x -= currentSpd;
       if (!o.passed && o.x+o.w < P.x) {
         o.passed = true;
         if (!passedGids.has(o.gid)) {
-          passedGids.add(o.gid);
-          score++;
-          scoreEl.textContent = score;
+          passedGids.add(o.gid); score++; scoreEl.textContent = score;
           if (score > best) { best = score; bestEl.textContent = best; }
-          // Tingkatkan kecepatan perlahan tiap kelipatan 5 skor
           if (score % 5 === 0 && score < WIN_SCORE) scrollSpd += 1.0;
         }
       }
@@ -546,30 +475,21 @@ function loop() {
 
     if (finishFlag) {
       finishFlag.x -= currentSpd;
-      if (!finishFlag.passed && finishFlag.x < P.x) {
-        finishFlag.passed = true;
-        triggerVictory();
-      }
+      if (!finishFlag.passed && finishFlag.x < P.x) { finishFlag.passed = true; triggerVictory(); }
     }
 
     if (phase === 'playing') {
       const hb = P.hitbox();
-      for (const o of obstacles) {
-        if (rectsOverlap(hb, o)) { killPlayer(); break; }
-      }
+      for (const o of obstacles) { if (rectsOverlap(hb, o)) { killPlayer(); break; } }
     }
-
     P.update();
     if (P.grounded && phase === 'playing') spawnRunDust();
-    particles = updateParts(particles, 0.04);
-    dustParts = updateParts(dustParts, 0.06);
+    particles = updateParts(particles, 0.04); dustParts = updateParts(dustParts, 0.06);
   }
-
   drawGame();
   requestAnimationFrame(loop);
 }
 
-// Menjalankan Game Loop Utama
 loop();
 </script>
 </body>
