@@ -1,496 +1,258 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>Geometry Dash Android Landscape</title>
-  <style>
-    *, *::before, *::after { 
-      margin: 0; 
-      padding: 0; 
-      box-sizing: border-box; 
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #050512;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      touch-action: none; 
-    }
-
-    /* ── LANDSCAPE WARNING NOTIFICATION ── */
-    #landscapeAlert {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: #070714;
-      z-index: 9999;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 15px;
-      text-align: center;
-      padding: 20px;
-    }
-
-    #landscapeAlert svg {
-      animation: rotateDevice 2s ease-in-out infinite;
-      fill: #00f5ff;
-    }
-
-    @keyframes rotateDevice {
-      0% { transform: rotate(0deg); }
-      50% { transform: rotate(-90deg); }
-      100% { transform: rotate(0deg); }
-    }
-
-    #landscapeAlert p {
-      font-size: 1.1rem;
-      font-weight: bold;
-      letter-spacing: 1px;
-      color: #00f5ff;
-    }
-
-    /* Deteksi layar HP tegak (Portrait) */
-    @media screen and (orientation: portrait) {
-      #landscapeAlert {
-        display: flex; /* Munculkan peringatan suruh putar HP */
-      }
-    }
-
-    /* ── GAME WRAPPER & ADAPTIVE CANVAS ── */
-    #gameWrapper {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-    }
-
-    #gameContainer {
-      position: relative;
-      width: 100vw;
-      height: 50vw; /* Menjaga aspek rasio 2:1 murni di layar landscape lebar */
-      max-width: 800px;
-      max-height: 400px;
-      background: #000;
-      box-shadow: 0 0 30px rgba(0, 245, 255, 0.2);
-      border-radius: 4px;
-    }
-
-    #gameCanvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-      background: #070714;
-    }
-
-    /* ── UI OVERLAY RESPONSIF ── */
-    .menu-overlay {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(5, 5, 20, 0.9);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      z-index: 10;
-      padding: 15px;
-      text-align: center;
-    }
-
-    .menu-overlay.hidden { display: none !important; }
-
-    .menu-title {
-      font-size: calc(1.4rem + 1.2vw);
-      font-weight: 900;
-      letter-spacing: 2px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kado Spesial Untukmu ❤️</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Sacramento&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    #mainMenu .menu-title { color: #00f5ff; text-shadow: 0 0 15px rgba(0,245,255,0.6); }
-    #gameOverMenu .menu-title { color: #ff3c6e; text-shadow: 0 0 15px rgba(255,60,110,0.6); }
-    #victoryMenu .menu-title { color: #39ff14; text-shadow: 0 0 15px rgba(57,255,20,0.6); }
-
-    .menu-stats { font-size: calc(0.75rem + 0.4vw); color: #aaa; }
-    .btn-group { display: flex; gap: 12px; }
-
-    .menu-btn {
-      padding: 8px 22px;
-      font-size: calc(0.75rem + 0.3vw);
-      font-weight: bold;
-      text-transform: uppercase;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .btn-primary { background: linear-gradient(135deg, #00f5ff, #00a2ff); color: #000; }
-    .btn-secondary { background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid rgba(255, 255, 255, 0.2); }
-
-    /* HUD Bawah Layar */
-    #hud {
-      position: absolute;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 20px;
-      font-size: 0.7rem;
-      color: #666;
-      letter-spacing: 1px;
-      z-index: 5;
-      background: rgba(5, 5, 18, 0.85);
-      padding: 5px 14px;
-      border-radius: 20px;
-      pointer-events: none;
-      border: 1px solid rgba(0, 245, 255, 0.1);
-    }
-    #hud b { color: #00f5ff; }
-
-    #mobileControls { position: absolute; top: 10px; right: 10px; z-index: 12; }
-    #uploadBtn {
-      padding: 5px 10px;
-      background: rgba(26, 26, 62, 0.8);
-      border: 1px solid #00f5ff44;
-      border-radius: 5px;
-      color: #00f5ff;
-      font-size: 0.65rem;
-      cursor: pointer;
-    }
-  </style>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #fff5f7; /* Putih kemerahan lembut */
+            color: #5c3d42;
+        }
+        .romantic-title {
+            font-family: 'Sacramento', cursive;
+            font-size: 3.5rem;
+            color: #ff6584;
+        }
+        /* Navbar Custom Tema Pink-Putih */
+        .navbar {
+            background-color: #ffffff !important;
+            border-bottom: 2px solid #fecdd3;
+        }
+        .navbar-brand, .nav-link {
+            color: #ff6584 !important;
+            font-weight: 600;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #d946ef !important;
+        }
+        /* Halaman default disembunyikan kecuali Beranda */
+        .page-section {
+            display: none;
+            padding: 60px 0;
+        }
+        .page-section.active {
+            display: block;
+        }
+        /* Card Foto */
+        .photo-card {
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #ffffff;
+            box-shadow: 0 4px 15px rgba(254, 205, 211, 0.5);
+            transition: transform 0.3s;
+        }
+        .photo-card:hover {
+            transform: translateY(-5px);
+        }
+        .photo-img {
+            height: 250px;
+            object-fit: cover;
+            background-color: #fecdd3; /* Background kalau foto belum dimuat */
+        }
+        /* Tombol Pink */
+        .btn-pink {
+            background-color: #ff6584;
+            color: white;
+            border-radius: 20px;
+            padding: 8px 25px;
+            border: none;
+        }
+        .btn-pink:hover {
+            background-color: #f43f5e;
+            color: white;
+        }
+        footer {
+            background-color: #fecdd3;
+            color: #881337;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
 
-<!-- Peringatan jika layar HP dalam posisi tegak -->
-<div id="landscapeAlert">
-  <svg width="64" height="64" viewBox="0 0 24 24">
-    <path d="M16 1H8C6.34 1 5 2.34 5 4v16c0 1.66 1.34 3 3 3h8c1.66 0 3-1.34 3-3V4c0-1.66-1.34-3-3-3zm-4 20c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm5-4H7V4h10v13z"/>
-  </svg>
-  <p>Mohon Putar HP ke Posisi Landscape (Miring)</p>
-</div>
+    <!-- NAVBAR (Navigasi 5 Halaman) -->
+    <nav class="navbar navbar-expand-lg sticky-top navbar-light bg-light">
+        <div class="container">
+            <a class="navbar-brand" href="#" onclick="showPage('beranda')"><i class="fa-solid fa-heart me-2"></i>Our Story</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto text-center">
+                    <li class="nav-item"><a class="nav-link active" id="nav-beranda" href="#" onclick="showPage('beranda')">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link" id="nav-tentang" href="#" onclick="showPage('tentang')">Tentang Kita</a></li>
+                    <li class="nav-item"><a class="nav-link" id="nav-galeri" href="#" onclick="showPage('galeri')">Galeri Foto</a></li>
+                    <li class="nav-item"><a class="nav-link" id="nav-momen" href="#" onclick="showPage('momen')">Momen Berharga</a></li>
+                    <li class="nav-item"><a class="nav-link" id="nav-pesan" href="#" onclick="showPage('pesan')">Pesan Spesial</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-<div id="gameWrapper">
-  <div id="gameContainer">
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <!-- CONTENT CONTAINER -->
+    <div class="container my-4">
 
-    <div id="mobileControls">
-      <button id="uploadBtn">BG Foto</button>
-      <input type="file" id="bgUpload" accept="image/*" style="display:none;" />
+        <!-- HALAMAN 1: BERANDA -->
+        <section id="beranda" class="page-section active text-center animate__animated animate__fadeIn">
+            <div class="py-5">
+                <h1 class="romantic-title mb-3">Halo Sayang...</h1>
+                <p class="lead text-muted mb-4">Website sederhana ini kubuat khusus sebagai kado spesial untukmu.</p>
+                <div class="row justify-content-center mb-4">
+                    <div class="col-md-6">
+                        <!-- Ganti foto_utama.jpg dengan foto kalian berdua -->
+                        <img src="foto_utama.jpg" alt="Foto Utama Kita" class="img-fluid rounded-4 shadow-sm" style="max-height: 400px; width: 100%; object-fit: cover;">
+                    </div>
+                </div>
+                <button class="btn btn-pink btn-lg" onclick="showPage('tentang')">Buka Kado <i class="fa-solid fa-arrow-right ms-2"></i></button>
+            </div>
+        </section>
+
+        <!-- HALAMAN 2: TENTANG KITA -->
+        <section id="tentang" class="page-section text-center">
+            <h2 class="fw-bold mb-4" style="color: #ff6584;">Tentang Kita</h2>
+            <div class="row align-items-center g-4 text-start justify-content-center">
+                <div class="col-md-4 text-center">
+                    <img src="foto_kamu.jpg" alt="Foto Pacar" class="img-fluid rounded-circle border border-4 border-white shadow mb-3" style="width: 180px; height: 180px; object-fit: cover;">
+                    <h4>Nama Pacarmu</h4>
+                    <p class="text-muted">Gadis tercantik dan penyabar.</p>
+                </div>
+                <div class="col-md-2 text-center">
+                    <h1 class="romantic-title" style="font-size: 5rem;">&</h1>
+                </div>
+                <div class="col-md-4 text-center">
+                    <img src="foto_aku.jpg" alt="Foto Aku" class="img-fluid rounded-circle border border-4 border-white shadow mb-3" style="width: 180px; height: 180px; object-fit: cover;">
+                    <h4>Namamu</h4>
+                    <p class="text-muted">Pria beruntung yang memilikinya.</p>
+                </div>
+            </div>
+            <div class="mt-5 max-w-xl mx-auto px-3">
+                <p class="fs-5">"Hubungan kita mungkin tidak selalu sempurna, tapi bersamamu adalah hal terbaik yang pernah terjadi dalam hidupku. Terima kasih sudah terus berjalan bersamaku hingga hari ini."</p>
+            </div>
+        </section>
+
+        <!-- HALAMAN 3: GALERI FOTO -->
+        <section id="galeri" class="page-section">
+            <h2 class="fw-bold text-center mb-5" style="color: #ff6584;">Galeri Foto Kita</h2>
+            <div class="row g-4">
+                <!-- Foto 1 -->
+                <div class="col-md-4 col-sm-6">
+                    <div class="card photo-card">
+                        <img src="foto1.jpg" class="card-img-top photo-img" alt="Momen 1">
+                        <div class="card-body">
+                            <p class="card-text text-muted small">📍 Lokasi / Waktu Foto</p>
+                            <h6 class="card-title fw-bold">Waktu kita pertama kali jalan</h6>
+                        </div>
+                    </div>
+                </div>
+                <!-- Foto 2 -->
+                <div class="col-md-4 col-sm-6">
+                    <div class="card photo-card">
+                        <img src="foto2.jpg" class="card-img-top photo-img" alt="Momen 2">
+                        <div class="card-body">
+                            <p class="card-text text-muted small">📍 Lokasi / Waktu Foto</p>
+                            <h6 class="card-title fw-bold">Senyum favoritku dari kamu</h6>
+                        </div>
+                    </div>
+                </div>
+                <!-- Foto 3 -->
+                <div class="col-md-4 col-sm-6">
+                    <div class="card photo-card">
+                        <img src="foto3.jpg" class="card-img-top photo-img" alt="Momen 3">
+                        <div class="card-body">
+                            <p class="card-text text-muted small">📍 Lokasi / Waktu Foto</p>
+                            <h6 class="card-title fw-bold">Makan bareng waktu itu</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HALAMAN 4: MOMEN BERHARGA -->
+        <section id="momen" class="page-section">
+            <h2 class="fw-bold text-center mb-5" style="color: #ff6584;">Momen Terindah</h2>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="p-4 bg-white rounded-4 shadow-sm mb-3 border-start border-5 border-danger">
+                        <h5 class="fw-bold">📅 12 Januari — Hari Pertama Kenal</h5>
+                        <p class="mb-0 text-muted">Hari di mana semesta mempertemukan kita secara tidak sengaja, dan semuanya berubah menjadi lebih indah.</p>
+                    </div>
+                    <div class="p-4 bg-white rounded-4 shadow-sm mb-3 border-start border-5 border-danger">
+                        <h5 class="fw-bold">📅 14 Februari — Makan Malam Pertama</h5>
+                        <p class="mb-0 text-muted">Ingat waktu kamu malu-malu kucing pas aku ajak ngobrol langsung? Lucu banget kalau diingat kembali.</p>
+                    </div>
+                    <div class="p-4 bg-white rounded-4 shadow-sm mb-3 border-start border-5 border-danger">
+                        <h5 class="fw-bold">📅 05 Mei — Merayakan Pencapaianmu</h5>
+                        <p class="mb-0 text-muted">Aku selalu bangga melihat kerja kerasmu dan timmu. Kamu selalu luar biasa!</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- HALAMAN 5: PESAN SPESIAL -->
+        <section id="pesan" class="page-section text-center">
+            <h2 class="fw-bold mb-4" style="color: #ff6584;">Pesan Spesial Untukmu</h2>
+            <div class="row justify-content-center">
+                <div class="col-md-6 bg-white p-5 rounded-4 shadow-sm">
+                    <i class="fa-solid fa-quote-left fa-3x mb-3" style="color: #fecdd3;"></i>
+                    <p class="fs-5 italic">"Tetaplah jadi dirimu yang ceria ya sayang. Sukses terus buat kamu dan semua tim hebatmu. Apapun tantangan ke depan, ingat kalau aku akan selalu ada di sini untuk mendukungmu."</p>
+                    <h5 class="fw-bold mt-4 text-end">— Dari Pacarmu ❤️</h5>
+                </div>
+            </div>
+        </section>
+
     </div>
 
-    <!-- MAIN MENU -->
-    <div id="mainMenu" class="menu-overlay">
-      <div class="menu-title">GEOMETRY DASH</div>
-      <button class="menu-btn btn-primary" id="startBtn">TAP TO PLAY</button>
-    </div>
+    <!-- FOOTER -->
+    <footer class="text-center py-4 mt-5">
+        <p class="mb-0">Dibuat dengan penuh cinta &copy; 2026</p>
+    </footer>
 
-    <!-- GAME OVER -->
-    <div id="gameOverMenu" class="menu-overlay hidden">
-      <div class="menu-title">GAME OVER</div>
-      <div class="menu-stats" id="gameOverStats">Skor: 0 • Terbaik: 0</div>
-      <div class="btn-group">
-        <button class="menu-btn btn-primary" id="retryBtn">Ulangi</button>
-        <button class="menu-btn btn-secondary" id="menuBtn">Menu</button>
-      </div>
-    </div>
+    <!-- Bootstrap 5 JS & Script SPA -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showPage(pageId) {
+            // Sembunyikan semua halaman
+            const sections = document.querySelectorAll('.page-section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
 
-    <!-- VICTORY -->
-    <div id="victoryMenu" class="menu-overlay hidden">
-      <div class="menu-title">LEVEL CLEARED! 🎉</div>
-      <div class="menu-stats">Kamu sukses menaklukan level!</div>
-      <div class="btn-group">
-        <button class="menu-btn btn-primary" id="playAgainBtn">Main Lagi</button>
-        <button class="menu-btn btn-secondary" id="victoryMenuBtn">Menu</button>
-      </div>
-    </div>
-  </div>
+            // Tampilkan halaman yang dipilih
+            const activeSection = document.getElementById(pageId);
+            if(activeSection) {
+                activeSection.classList.add('active');
+            }
 
-  <div id="hud">
-    <div>SKOR <b id="scoreEl">0</b></div>
-    <div>TERBAIK <b id="bestEl">0</b></div>
-    <div>PERCOBAAN <b id="triesEl">0</b></div>
-  </div>
-</div>
+            // Atur status active pada navbar
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            const activeNavLink = document.getElementById('nav-' + pageId);
+            if(activeNavLink) {
+                activeNavLink.classList.add('active');
+            }
 
-<script>
-const canvas  = document.getElementById('gameCanvas');
-const ctx     = canvas.getContext('2d');
-const W = 800, H = 400;
-const GROUND_Y  = H - 60;
-const P_SIZE    = 34;
+            // Otomatis menutup menu navbar di tampilan HP setelah diklik
+            const navbarCollapse = document.getElementById('navbarNav');
+            if(navbarCollapse.classList.contains('show')) {
+                const bsCollapse = new bootstrap.Collapse(navbarCollapse);
+                bsCollapse.hide();
+            }
 
-// Parameter Fisika Responsif & Cepat Jatuh
-const GRAVITY   = 1.25;     
-const JUMP_VY   = -17.8;   
-const BASE_SPD  = 7.8;     
-const MAX_SPD   = 14;
-const WIN_SCORE = 20;
-
-const scoreEl = document.getElementById('scoreEl');
-const bestEl  = document.getElementById('bestEl');
-const triesEl = document.getElementById('triesEl');
-const bgUpload = document.getElementById('bgUpload');
-const uploadBtn = document.getElementById('uploadBtn');
-
-const mainMenu = document.getElementById('mainMenu');
-const gameOverMenu = document.getElementById('gameOverMenu');
-const victoryMenu = document.getElementById('victoryMenu');
-const gameOverStats = document.getElementById('gameOverStats');
-
-let phase = 'menu'; 
-let score = 0, best = 0, tries = 0;
-let scrollSpd = BASE_SPD;
-let particles = [], dustParts = [];
-let obstacles = [], obTimer = 0, obInterval = 85;
-let passedGids = new Set();
-let _gid = 0;
-let gridOff = 0;
-let finishFlag = null;
-let bgImage = null;
-let bgOffX = 0, bgImgW = 1, bgScaleH = 1;
-
-// ════════════════════════════════════════════════════════════
-//  FORCE FULLSCREEN & ORIENTATION LOCK (API HP)
-// ════════════════════════════════════════════════════════════
-function requestLandscapeAndFullscreen() {
-  const docEl = document.documentElement;
-  
-  // Masuk Mode Fullscreen jika didukung browser HP
-  if (docEl.requestFullscreen) {
-    docEl.requestFullscreen().catch(() => {});
-  } else if (docEl.webkitRequestFullscreen) {
-    docEl.webkitRequestFullscreen();
-  }
-
-  // Paksa layar mengunci ke Landscape miring
-  if (screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock('landscape').catch((err) => {
-      console.log("Kunci orientasi otomatis ditolak browser, mengandalkan rotasi manual.");
-    });
-  }
-}
-
-// ════════════════════════════════════════════════════════════
-//  ZERO-DELAY INPUT MANAGER
-// ════════════════════════════════════════════════════════════
-function triggerJump(e) {
-  if (e && e.cancelable) e.preventDefault();
-  
-  // Klik pertama kali otomatis mengaktifkan fullscreen landscape game
-  if (phase === 'menu') {
-    requestLandscapeAndFullscreen();
-  }
-  
-  if (phase === 'playing' || phase === 'victory') {
-    P.jump();
-  }
-}
-
-canvas.addEventListener('pointerdown', triggerJump, { passive: false });
-window.addEventListener('keydown', e => {
-  if (e.code === 'Space' || e.code === 'ArrowUp') triggerJump(e);
-}, { passive: false });
-
-document.getElementById('startBtn').addEventListener('pointerdown', e => { e.stopPropagation(); requestLandscapeAndFullscreen(); startGame(); });
-document.getElementById('retryBtn').addEventListener('pointerdown', e => { e.stopPropagation(); startGame(); });
-document.getElementById('menuBtn').addEventListener('pointerdown', e => { e.stopPropagation(); backToMenu(); });
-document.getElementById('playAgainBtn').addEventListener('pointerdown', e => { e.stopPropagation(); startGame(); });
-document.getElementById('victoryMenuBtn').addEventListener('pointerdown', e => { e.stopPropagation(); backToMenu(); });
-
-uploadBtn.addEventListener('pointerdown', e => { e.stopPropagation(); bgUpload.click(); });
-bgUpload.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
-  const img = new Image();
-  img.onload = () => {
-    bgImage = img; bgImgW = img.naturalWidth; bgScaleH = H / img.naturalHeight; bgOffX = 0;
-  };
-  img.src = url;
-});
-
-// ════════════════════════════════════════════════════════════
-//  PLAYER PHYSICS
-// ════════════════════════════════════════════════════════════
-const P = {
-  x: 120, y: 0, vy: 0, grounded: true, angle: 0,
-
-  reset() { this.y = GROUND_Y - P_SIZE; this.vy = 0; this.grounded = true; this.angle = 0; },
-  jump() {
-    if (this.grounded) { this.vy = JUMP_VY; this.grounded = false; spawnJumpDust(this.x + P_SIZE / 2, GROUND_Y); }
-  },
-  update() {
-    this.vy += GRAVITY; this.y += this.vy;
-    if (this.y >= GROUND_Y - P_SIZE) { this.y = GROUND_Y - P_SIZE; this.vy = 0; this.grounded = true; }
-    if (!this.grounded) { this.angle += 7.5; } 
-    else { const snap = Math.round(this.angle / 90) * 90; this.angle += (snap - this.angle) * 0.4; }
-  },
-  draw() {
-    const cx = this.x + P_SIZE / 2, cy = this.y + P_SIZE / 2;
-    ctx.save(); ctx.translate(cx, cy); ctx.rotate(this.angle * Math.PI / 180);
-    ctx.fillStyle = '#00f5ff'; ctx.fillRect(-P_SIZE/2, -P_SIZE/2, P_SIZE, P_SIZE);
-    ctx.fillStyle = '#050518'; ctx.save(); ctx.rotate(Math.PI/4); ctx.fillRect(-8,-8,16,16); ctx.restore();
-    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.strokeRect(-P_SIZE/2, -P_SIZE/2, P_SIZE, P_SIZE);
-    ctx.restore();
-  },
-  hitbox() { const pad = 4; return { x: this.x+pad, y: this.y+pad, w: P_SIZE-pad*2, h: P_SIZE-pad*2 }; }
-};
-
-// ════════════════════════════════════════════════════════════
-//  OBSTACLES LOGIC
-// ════════════════════════════════════════════════════════════
-const SW = 30, SH = 36, BW = 36, BH = 36;
-function mkSpike(x) { return { type:'spike', x, y: GROUND_Y-SH, w: SW, h: SH }; }
-function mkBlock(x, h) { return { type:'block', x, y: GROUND_Y-h, w: BW, h }; }
-
-const OBSTACLE_TYPES = [
-  () => [mkSpike(W+10)],
-  () => [mkSpike(W+10), mkSpike(W+47)],
-  () => [mkBlock(W+10, BH*2)],
-  () => [mkBlock(W+10, BH), mkSpike(W+70)],
-  () => [mkBlock(W+10, BH*3)]
-];
-
-function spawnObstacle() {
-  if (score >= WIN_SCORE - 1 || finishFlag) return;
-  const idx = Math.floor(Math.random() * OBSTACLE_TYPES.length);
-  const group = OBSTACLE_TYPES[idx]();
-  const gid = ++_gid;
-  group.forEach(o => { o.gid = gid; o.passed = false; });
-  obstacles.push(...group);
-}
-
-function rectsOverlap(a, b) { return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y; }
-
-// ════════════════════════════════════════════════════════════
-//  PARTICLES & PARTICLES MATH
-// ════════════════════════════════════════════════════════════
-function spawnJumpDust(x, y) {
-  for (let i = 0; i < 6; i++) {
-    dustParts.push({ x, y, vx: (Math.random()-0.5)*3, vy: -(Math.random()*2), life: 1, size: Math.random()*4+2, color: '#00f5ff' });
-  }
-}
-function spawnRunDust() {
-  if (Math.random() > 0.3) return;
-  dustParts.push({ x: P.x, y: GROUND_Y, vx: -2, vy: -Math.random(), life: 1, size: Math.random()*3+1, color: 'rgba(0, 245, 255, 0.4)' });
-}
-function spawnDeathBurst(x, y) {
-  for (let i = 0; i < 24; i++) {
-    const a = Math.random()*Math.PI*2, s = Math.random()*6+2;
-    particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, life: 1, size: Math.random()*6+2, color: i%2 ? '#00f5ff' : '#ff3c6e' });
-  }
-}
-function updateParts(arr, decay) {
-  for (const p of arr) { p.x += p.vx; p.y += p.vy; p.life -= decay; }
-  return arr.filter(p => p.life > 0);
-}
-
-// ════════════════════════════════════════════════════════════
-//  ENGINE DRAWING
-// ════════════════════════════════════════════════════════════
-function drawGame() {
-  if (bgImage) {
-    const scaledW = bgImgW * bgScaleH;
-    if (phase === 'playing') bgOffX = (bgOffX + scrollSpd * 0.4) % scaledW;
-    for (let x = -bgOffX; x < W; x += scaledW) ctx.drawImage(bgImage, x, 0, scaledW, H);
-    ctx.fillStyle = 'rgba(5, 5, 20, 0.4)'; ctx.fillRect(0, 0, W, GROUND_Y);
-  } else {
-    ctx.fillStyle = '#070714'; ctx.fillRect(0, 0, W, GROUND_Y);
-    ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1;
-    const step = 50, off = gridOff % step;
-    for(let x=-off; x<W; x+=step) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,GROUND_Y); ctx.stroke(); }
-  }
-
-  ctx.fillStyle = '#0f0f2d'; ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
-  ctx.strokeStyle = '#00f5ff'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(0, GROUND_Y); ctx.lineTo(W, GROUND_Y); ctx.stroke();
-
-  for (const p of dustParts) { ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fillRect(p.x, p.y, p.size, p.size); }
-  for (const p of particles) { ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.beginPath(); ctx.arc(p.x, p.y, p.size/2, 0, Math.PI*2); ctx.fill(); }
-  ctx.globalAlpha = 1.0;
-
-  for (const o of obstacles) {
-    if (o.type === 'spike') {
-      ctx.fillStyle = '#ff3c6e'; ctx.beginPath(); ctx.moveTo(o.x, o.y+o.h); ctx.lineTo(o.x+o.w/2, o.y); ctx.lineTo(o.x+o.w, o.y+o.h); ctx.fill();
-    } else {
-      ctx.fillStyle = '#7c3aed'; ctx.fillRect(o.x, o.y, o.w, o.h);
-      ctx.strokeStyle = '#b98fff'; ctx.lineWidth = 1.5; ctx.strokeRect(o.x, o.y, o.w, o.h);
-    }
-  }
-
-  if (finishFlag) { ctx.fillStyle = '#fff'; ctx.fillRect(finishFlag.x, finishFlag.y, 6, finishFlag.h); }
-  if (phase !== 'dead') P.draw();
-}
-
-// ════════════════════════════════════════════════════════════
-//  GAME LIFECYCLE MANAGERS
-// ════════════════════════════════════════════════════════════
-function startGame() {
-  phase = 'playing'; score = 0; tries++; obstacles = []; obTimer = 0; particles = []; dustParts = [];
-  scrollSpd = BASE_SPD; passedGids.clear(); finishFlag = null; P.reset();
-  triesEl.textContent = tries; scoreEl.textContent = 0;
-  mainMenu.classList.add('hidden'); gameOverMenu.classList.add('hidden'); victoryMenu.classList.add('hidden');
-}
-
-function killPlayer() {
-  phase = 'dead'; spawnDeathBurst(P.x+P_SIZE/2, P.y+P_SIZE/2);
-  gameOverStats.textContent = `Skor: ${score} • Terbaik: ${best}`;
-  gameOverMenu.classList.remove('hidden');
-}
-
-function triggerVictory() { phase = 'victory'; victoryMenu.classList.remove('hidden'); }
-function backToMenu() { phase = 'menu'; mainMenu.classList.remove('hidden'); gameOverMenu.classList.add('hidden'); victoryMenu.classList.add('hidden'); }
-
-function loop() {
-  if (phase === 'playing' || phase === 'victory') {
-    let currentSpd = (phase === 'victory') ? scrollSpd * 0.5 : scrollSpd;
-    gridOff += currentSpd;
-    if (score >= WIN_SCORE && !finishFlag) finishFlag = { x: W + 80, y: GROUND_Y - 100, w: 20, h: 100, passed: false };
-    if (phase === 'playing') { if (++obTimer >= obInterval) { obTimer = 0; spawnObstacle(); } }
-
-    for (const o of obstacles) {
-      o.x -= currentSpd;
-      if (!o.passed && o.x+o.w < P.x) {
-        o.passed = true;
-        if (!passedGids.has(o.gid)) {
-          passedGids.add(o.gid); score++; scoreEl.textContent = score;
-          if (score > best) { best = score; bestEl.textContent = best; }
-          if (score % 5 === 0 && score < WIN_SCORE) scrollSpd += 1.0;
+            // Scroll otomatis ke atas halaman
+            window.scrollTo({top: 0, behavior: 'smooth'});
         }
-      }
-    }
-    obstacles = obstacles.filter(o => o.x+o.w > -50);
-
-    if (finishFlag) {
-      finishFlag.x -= currentSpd;
-      if (!finishFlag.passed && finishFlag.x < P.x) { finishFlag.passed = true; triggerVictory(); }
-    }
-
-    if (phase === 'playing') {
-      const hb = P.hitbox();
-      for (const o of obstacles) { if (rectsOverlap(hb, o)) { killPlayer(); break; } }
-    }
-    P.update();
-    if (P.grounded && phase === 'playing') spawnRunDust();
-    particles = updateParts(particles, 0.04); dustParts = updateParts(dustParts, 0.06);
-  }
-  drawGame();
-  requestAnimationFrame(loop);
-}
-
-loop();
-</script>
+    </script>
 </body>
 </html>
